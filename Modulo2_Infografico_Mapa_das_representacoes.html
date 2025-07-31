@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa das Representações de Texto</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tippy.js (Tooltips) -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+
+    <!-- GSAP (Animações) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Prism.js (Syntax Highlighting) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+    <style>
+        /* Estilos personalizados */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #f1f5f9; /* slate-100 */
+            overflow-y: hidden; /* Previne rolagem vertical da página inteira */
+        }
+
+        /* Esconder a barra de rolagem horizontal principal */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Estilos para o painel lateral (drawer) */
+        .drawer {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(100%);
+        }
+        .drawer.is-open {
+            transform: translateX(0);
+        }
+        .drawer-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Estilos para o modal */
+        .modal {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out;
+            transform: scale(0.95);
+        }
+        .modal.is-open .modal-content {
+            transform: scale(1);
+        }
+        
+        /* Animação de desenho da linha SVG */
+        .connector-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+        }
+
+        /* Estilo para o tooltip do Tippy.js */
+        .tippy-box[data-theme~='custom'] {
+            background-color: #1e293b; /* slate-800 */
+            color: #cbd5e1; /* slate-300 */
+            border-radius: 8px;
+            border: 1px solid #334155; /* slate-700 */
+        }
+        .tippy-arrow[data-theme~='custom'] {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Cabeçalho Fixo -->
+    <header class="bg-slate-900/80 backdrop-blur-sm border-b border-slate-700 p-4 z-30">
+        <h1 class="text-xl md:text-2xl font-bold text-center text-slate-100">Mapa das Representações de Texto</h1>
+        <p class="text-sm md:text-base text-center text-slate-400">Da sacola de palavras à contextualização profunda</p>
+    </header>
+
+    <!-- Eixos -->
+    <div class="px-8 md:px-16 py-4 space-y-3 z-10 bg-slate-900">
+        <!-- Eixo de Contextualidade -->
+        <div class="flex items-center space-x-4">
+            <span class="text-xs font-semibold text-cyan-400 w-32 shrink-0">Contextualidade</span>
+            <div class="w-full relative">
+                <svg width="100%" height="20" class="overflow-visible">
+                    <defs>
+                        <linearGradient id="gradContext" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#22d3ee;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <line x1="0" y1="10" x2="100%" y2="10" stroke="url(#gradContext)" stroke-width="3" />
+                    <line x1="100%" y1="5" x2="calc(100% - 10px)" y2="10" stroke="url(#gradContext)" stroke-width="3" />
+                    <line x1="100%" y1="15" x2="calc(100% - 10px)" y2="10" stroke="url(#gradContext)" stroke-width="3" />
+                </svg>
+                <div class="absolute top-full left-0 w-full flex justify-between text-xs text-slate-400 mt-1">
+                    <span>Baixa</span>
+                    <span>Média</span>
+                    <span>Alta</span>
+                </div>
+            </div>
+        </div>
+        <!-- Eixo de Custo Computacional -->
+        <div class="flex items-center space-x-4">
+            <span class="text-xs font-semibold text-amber-400 w-32 shrink-0">Custo Computacional</span>
+            <div class="w-full relative">
+                 <svg width="100%" height="20" class="overflow-visible">
+                    <defs>
+                        <linearGradient id="gradCost" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#f87171;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <line x1="0" y1="10" x2="100%" y2="10" stroke="url(#gradCost)" stroke-width="3" />
+                    <line x1="100%" y1="5" x2="calc(100% - 10px)" y2="10" stroke="url(#gradCost)" stroke-width="3" />
+                    <line x1="100%" y1="15" x2="calc(100% - 10px)" y2="10" stroke="url(#gradCost)" stroke-width="3" />
+                </svg>
+                <div class="absolute top-full left-0 w-full flex justify-between text-xs text-slate-400 mt-1">
+                    <span>Baixo</span>
+                    <span>Médio</span>
+                    <span>Alto</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal com Rolagem Horizontal -->
+    <main id="main-container" class="flex-grow w-full overflow-x-auto overflow-y-hidden no-scrollbar relative">
+        <div class="relative w-max h-full flex items-center px-16 md:px-32">
+            <!-- Linhas de Conexão SVG -->
+            <svg id="connector-svg" class="absolute top-0 left-0 w-full h-full" style="pointer-events: none; z-index: -1;"></svg>
+
+            <!-- Estações -->
+            <section id="station1" data-step="1" class="station bow flex-shrink-0 w-64 h-64 mx-8 flex flex-col items-center justify-center cursor-pointer" data-tooltip="Conta a frequência de palavras, ignorando a ordem.">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="45" class="fill-slate-700 stroke-slate-500" stroke-width="2"/>
+                        <text x="50" y="55" font-size="16" text-anchor="middle" class="fill-slate-200 font-bold">BoW</text>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-300">Bag-of-Words</h3>
+            </section>
+
+            <section id="station2" data-step="2" class="station ngrams flex-shrink-0 w-64 h-64 mx-8 flex flex-col items-center justify-center cursor-pointer" data-tooltip="Captura contexto local com sequências de N palavras.">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="45" class="fill-slate-700 stroke-cyan-500" stroke-width="2"/>
+                        <text x="50" y="55" font-size="16" text-anchor="middle" class="fill-slate-200 font-bold">N-grams</text>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-300">N-grams</h3>
+            </section>
+
+            <section id="station3" data-step="3" class="station tfidf flex-shrink-0 w-64 h-64 mx-8 flex flex-col items-center justify-center cursor-pointer" data-tooltip="Pondera palavras pela sua importância no documento e no corpus.">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="45" class="fill-slate-700 stroke-green-500" stroke-width="2"/>
+                        <text x="50" y="55" font-size="16" text-anchor="middle" class="fill-slate-200 font-bold">TF-IDF</text>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-300">TF-IDF</h3>
+            </section>
+
+            <section id="station4" data-step="4" class="station static-embeddings flex-shrink-0 w-64 h-64 mx-8 flex flex-col items-center justify-center cursor-pointer" data-tooltip="Representa palavras como vetores densos com significado semântico.">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <rect x="5" y="5" width="90" height="90" rx="10" class="fill-slate-800 stroke-blue-500" stroke-width="2"/>
+                        <text x="50" y="55" font-size="12" text-anchor="middle" class="fill-slate-200 font-bold">Word2Vec</text>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-300">Embeddings Estáticos</h3>
+            </section>
+
+            <section id="station5" data-step="5" class="station contextual-embeddings flex-shrink-0 w-64 h-64 mx-8 flex flex-col items-center justify-center cursor-pointer" data-tooltip="Gera vetores que mudam de acordo com o contexto da frase (BERT, GPT).">
+                <div class="relative w-32 h-32 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <rect x="5" y="5" width="90" height="90" rx="10" class="fill-slate-800 stroke-indigo-500" stroke-width="2"/>
+                        <text x="50" y="55" font-size="16" text-anchor="middle" class="fill-slate-200 font-bold">BERT</text>
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-300">Embeddings Contextuais</h3>
+            </section>
+        </div>
+    </main>
+
+    <!-- Navegação Inferior -->
+    <nav class="flex justify-center items-center p-4 space-x-4 z-20">
+        <div id="nav-dots" class="flex space-x-3">
+            <!-- Dots serão gerados via JS -->
+        </div>
+    </nav>
+
+    <!-- Rodapé / Legenda -->
+    <footer class="bg-slate-900/80 backdrop-blur-sm border-t border-slate-700 p-4 text-xs text-slate-400 z-30">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-full bg-slate-700"></div><span>Esparso</span></div>
+                <div class="flex items-center space-x-2"><div class="w-3 h-3 rounded bg-slate-800"></div><span>Denso</span></div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-2 rounded-full bg-gradient-to-r from-slate-500 via-cyan-500 to-indigo-500"></div>
+                    <span>Evolução</span>
+                </div>
+            </div>
+            <p class="text-center md:text-right">Vetores densos custam mais, mas capturam mais contexto.</p>
+            <div class="flex items-center space-x-4">
+                <button id="code-example-btn" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-md text-slate-200 transition-colors">Exemplos de Código</button>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- Painel Lateral (Drawer) -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/60 z-40 opacity-0 pointer-events-none"></div>
+    <div id="drawer" class="drawer fixed top-0 right-0 w-full max-w-md h-full bg-slate-800 shadow-2xl z-50 p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="drawer-title" class="text-2xl font-bold text-white">Título da Técnica</h2>
+            <button id="drawer-close-btn" class="text-slate-400 hover:text-white">&times;</button>
+        </div>
+        <div id="drawer-content" class="space-y-6">
+            <div>
+                <h3 class="font-semibold text-lg text-slate-300 mb-2">Definição</h3>
+                <p id="drawer-definition" class="text-slate-400"></p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg text-slate-300 mb-2">Exemplo Visual</h3>
+                <div id="drawer-image" class="bg-slate-700 rounded-lg p-4 min-h-[150px] flex items-center justify-center"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold text-lg text-green-400 mb-2">Prós</h3>
+                    <ul id="drawer-pros" class="list-disc list-inside space-y-1 text-slate-400"></ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg text-red-400 mb-2">Contras</h3>
+                    <ul id="drawer-cons" class="list-disc list-inside space-y-1 text-slate-400"></ul>
+                </div>
+            </div>
+            <div class="space-y-4 pt-4">
+                <div>
+                    <label class="text-sm font-medium text-cyan-400">Ganho de Contextualidade</label>
+                    <progress id="drawer-context-progress" class="w-full [&::-webkit-progress-bar]:bg-slate-700 [&::-webkit-progress-value]:bg-cyan-500 [&::-moz-progress-bar]:bg-cyan-500" max="100"></progress>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-amber-400">Custo Computacional</label>
+                    <progress id="drawer-cost-progress" class="w-full [&::-webkit-progress-bar]:bg-slate-700 [&::-webkit-progress-value]:bg-amber-500 [&::-moz-progress-bar]:bg-amber-500" max="100"></progress>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Exemplos de Código -->
+    <div id="code-modal" class="modal fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 opacity-0 invisible">
+        <div class="modal-content bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-slate-700">
+                <h3 class="text-xl font-bold text-white">Exemplos de Código</h3>
+                <button id="modal-close-btn" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div id="code-modal-body" class="p-6 overflow-y-auto">
+                <!-- Conteúdo do código aqui -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DADOS DAS ESTAÇÕES ---
+        const stationData = {
+            '1': {
+                title: 'Bag-of-Words (BoW)',
+                definition: 'Representa texto como um multiconjunto (saco) de suas palavras, desconsiderando a gramática e a ordem, mas mantendo a multiplicidade. É uma abordagem simples e eficiente para classificação de textos.',
+                pros: ['Simples de implementar', 'Eficiente computacionalmente', 'Funciona bem para classificação de tópicos'],
+                cons: ['Ignora a ordem das palavras', 'Não captura semântica (significado)', 'Gera vetores muito grandes e esparsos'],
+                image: `<svg width="150" height="80" viewBox="0 0 150 80"><text x="10" y="20" class="fill-slate-400 text-xs">o gato sentou</text><text x="10" y="40" class="fill-slate-400 text-xs">o cão latiu</text><text x="10" y="70" class="fill-cyan-300 text-xs">[2, 1, 1, 1, 1, 0]</text><path d="M 60 25 L 60 55" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/><path d="M 50 45 L 20 55" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/></svg>`,
+                context: 10,
+                cost: 10,
+                code: `from sklearn.feature_extraction.text import CountVectorizer
+
+corpus = ['O gato sentou no tapete.', 'O cão perseguiu o gato.']
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(corpus)
+print(vectorizer.get_feature_names_out())
+# ['cão', 'gato', 'no', 'o', 'perseguiu', 'sentou', 'tapete']
+print(X.toarray())
+# [[0 1 1 1 0 1 1]
+#  [1 1 0 1 1 0 0]]`
+            },
+            '2': {
+                title: 'N-grams',
+                definition: 'São sequências contíguas de N itens (palavras) de uma amostra de texto. Ao contrário do BoW, eles capturam o contexto local e a ordem das palavras, melhorando a representação.',
+                pros: ['Captura contexto local', 'Preserva a ordem das palavras', 'Melhora a performance em várias tarefas'],
+                cons: ['Aumenta muito a esparsidade', 'Sensível ao tamanho de N', 'Pode não capturar dependências de longa distância'],
+                image: `<svg width="150" height="80" viewBox="0 0 150 80"><text x="10" y="20" class="fill-slate-400 text-xs">"o gato sentou"</text><text x="10" y="50" class="fill-cyan-300 text-xs">["o gato", "gato sentou"]</text><path d="M 70 25 L 70 40" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 2"/></svg>`,
+                context: 25,
+                cost: 20,
+                code: `from sklearn.feature_extraction.text import CountVectorizer
+
+corpus = ['o gato sentou no tapete']
+# Usando bigramas (N=2)
+vectorizer = CountVectorizer(ngram_range=(2, 2))
+X = vectorizer.fit_transform(corpus)
+print(vectorizer.get_feature_names_out())
+# ['gato sentou', 'no tapete', 'o gato', 'sentou no']`
+            },
+            '3': {
+                title: 'TF-IDF',
+                definition: 'Term Frequency-Inverse Document Frequency é uma medida estatística que avalia a importância de uma palavra para um documento em uma coleção (corpus). A importância aumenta proporcionalmente ao número de vezes que uma palavra aparece no documento, mas é compensada pela frequência da palavra no corpus.',
+                pros: ['Pondera a importância das palavras', 'Reduz o peso de termos comuns', 'Eficaz para busca de informação e sumarização'],
+                cons: ['Ainda ignora a ordem e semântica', 'Baseado apenas em frequência', 'Pode dar peso indevido a termos raros'],
+                image: `<svg width="150" height="80" viewBox="0 0 150 80"><rect x="10" y="60" width="20" height="20" class="fill-slate-600"></rect><rect x="35" y="40" width="20" height="40" class="fill-cyan-500"></rect><rect x="60" y="50" width="20" height="30" class="fill-slate-600"></rect><rect x="85" y="20" width="20" height="60" class="fill-green-500"></rect></svg>`,
+                context: 35,
+                cost: 30,
+                code: `from sklearn.feature_extraction.text import TfidfVectorizer
+
+corpus = ['este é o primeiro documento', 'este documento é o segundo documento', 'e este é o terceiro']
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(corpus)
+print(vectorizer.get_feature_names_out())
+print(X.toarray().round(2))`
+            },
+            '4': {
+                title: 'Embeddings Estáticos (Word2Vec, GloVe)',
+                definition: 'Técnicas que aprendem representações vetoriais densas para palavras. Cada palavra é mapeada para um vetor, e palavras com significados semelhantes têm vetores próximos no espaço vetorial. O embedding é "estático" porque cada palavra tem um único vetor, independentemente do contexto.',
+                pros: ['Captura relações semânticas (rei - homem + mulher ≈ rainha)', 'Vetores densos e de baixa dimensão', 'Generaliza melhor que modelos esparsos'],
+                cons: ['Não lida com polissemia (ex: "banco")', 'Requer grande corpus para treinamento', 'Custo computacional de treinamento é alto'],
+                image: `<svg width="150" height="100" viewBox="0 0 150 100">${[...Array(30)].map(() => `<circle cx="${Math.random()*130+10}" cy="${Math.random()*80+10}" r="2" class="fill-blue-400 opacity-70" />`).join('')}<circle cx="40" cy="40" r="4" class="fill-green-400" /><circle cx="45" cy="42" r="4" class="fill-green-400" /><text x="35" y="30" class="fill-slate-200 text-xs">Rei</text><circle cx="110" cy="70" r="4" class="fill-amber-400" /><circle cx="115" cy="72" r="4" class="fill-amber-400" /><text x="105" y="60" class="fill-slate-200 text-xs">Gato</text></svg>`,
+                context: 70,
+                cost: 60,
+                code: `# Usando uma biblioteca como Gensim (exemplo conceitual)
+# pip install gensim
+from gensim.models import Word2Vec
+
+sentences = [['o', 'gato', 'sentou'], ['o', 'cão', 'latiu']]
+model = Word2Vec(sentences, vector_size=100, window=5, min_count=1, workers=4)
+vector_gato = model.wv['gato']
+print(vector_gato.shape)
+# (100,)`
+            },
+            '5': {
+                title: 'Embeddings Contextuais (BERT, GPT)',
+                definition: 'Modelos de linguagem baseados em Transformers que geram embeddings de palavras que dependem do contexto em que aparecem. A mesma palavra terá vetores diferentes em frases diferentes, resolvendo o problema da polissemia.',
+                pros: ['Entende o contexto e a ambiguidade', 'Estado da arte em muitas tarefas de NLP', 'Modelos pré-treinados disponíveis'],
+                cons: ['Extremamente caro computacionalmente', 'Requer hardware especializado (GPUs/TPUs)', 'Modelos muito grandes e complexos'],
+                image: `<svg width="150" height="100" viewBox="0 0 150 100"><text x="10" y="20" class="fill-slate-300 text-xs">O banco emprestou dinheiro.</text><text x="10" y="35" class="fill-cyan-400 text-xs">[0.1, 0.8, ...]</text><text x="10" y="70" class="fill-slate-300 text-xs">Sentei no banco da praça.</text><text x="10" y="85" class="fill-indigo-400 text-xs">[0.9, 0.2, ...]</text></svg>`,
+                context: 95,
+                cost: 95,
+                code: `# Usando a biblioteca Transformers (exemplo conceitual)
+# pip install transformers torch
+from transformers import BertTokenizer, BertModel
+import torch
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased')
+
+text = "A palavra 'banco' pode ter múltiplos significados."
+inputs = tokenizer(text, return_tensors="pt")
+outputs = model(**inputs)
+last_hidden_states = outputs.last_hidden_state
+# A representação de cada token agora é contextual.
+print(last_hidden_states.shape)`
+            }
+        };
+
+        // --- INICIALIZAÇÃO ---
+        const stations = document.querySelectorAll('.station');
+        const mainContainer = document.getElementById('main-container');
+        const navDotsContainer = document.getElementById('nav-dots');
+        let activeStep = 1;
+
+        // Gerar pontos de navegação
+        stations.forEach(station => {
+            const dot = document.createElement('button');
+            dot.className = 'w-3 h-3 rounded-full bg-slate-600 hover:bg-slate-400 transition-colors';
+            dot.dataset.step = station.dataset.step;
+            navDotsContainer.appendChild(dot);
+        });
+        const navDots = document.querySelectorAll('#nav-dots button');
+
+        // --- FUNÇÕES ---
+
+        function updateActiveNav(step) {
+            activeStep = step;
+            navDots.forEach(d => {
+                d.classList.toggle('bg-indigo-400', d.dataset.step == step);
+                d.classList.toggle('bg-slate-600', d.dataset.step != step);
+            });
+        }
+
+        function scrollToStation(step) {
+            const stationEl = document.getElementById(`station${step}`);
+            if (stationEl) {
+                stationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                updateActiveNav(step);
+            }
+        }
+        
+        // --- LÓGICA DO PAINEL (DRAWER) ---
+        const drawer = document.getElementById('drawer');
+        const drawerOverlay = document.getElementById('drawer-overlay');
+        const drawerCloseBtn = document.getElementById('drawer-close-btn');
+        const drawerTitle = document.getElementById('drawer-title');
+        const drawerDefinition = document.getElementById('drawer-definition');
+        const drawerImage = document.getElementById('drawer-image');
+        const drawerPros = document.getElementById('drawer-pros');
+        const drawerCons = document.getElementById('drawer-cons');
+        const drawerContextProgress = document.getElementById('drawer-context-progress');
+        const drawerCostProgress = document.getElementById('drawer-cost-progress');
+
+        function openDrawer(step) {
+            const data = stationData[step];
+            if (!data) return;
+
+            drawerTitle.textContent = data.title;
+            drawerDefinition.textContent = data.definition;
+            drawerImage.innerHTML = data.image;
+            
+            drawerPros.innerHTML = data.pros.map(item => `<li>${item}</li>`).join('');
+            drawerCons.innerHTML = data.cons.map(item => `<li>${item}</li>`).join('');
+
+            drawerContextProgress.value = data.context;
+            drawerCostProgress.value = data.cost;
+            
+            drawerOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            drawer.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            drawerOverlay.classList.add('opacity-0', 'pointer-events-none');
+            drawer.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        // --- LÓGICA DO MODAL DE CÓDIGO ---
+        const codeModal = document.getElementById('code-modal');
+        const codeModalBody = document.getElementById('code-modal-body');
+        const codeExampleBtn = document.getElementById('code-example-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        function openCodeModal() {
+            let content = '';
+            for (const step in stationData) {
+                const data = stationData[step];
+                content += `
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-indigo-400 mb-2">${data.title}</h4>
+                        <pre><code class="language-python">${data.code.trim()}</code></pre>
+                    </div>
+                `;
+            }
+            codeModalBody.innerHTML = content;
+            Prism.highlightAllUnder(codeModalBody);
+            
+            codeModal.classList.remove('opacity-0', 'invisible');
+            codeModal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCodeModal() {
+            codeModal.classList.add('opacity-0', 'invisible');
+            codeModal.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+
+        // --- EVENT LISTENERS ---
+        stations.forEach(station => {
+            station.addEventListener('click', () => {
+                openDrawer(station.dataset.step);
+            });
+        });
+        
+        drawerCloseBtn.addEventListener('click', closeDrawer);
+        drawerOverlay.addEventListener('click', closeDrawer);
+
+        codeExampleBtn.addEventListener('click', openCodeModal);
+        modalCloseBtn.addEventListener('click', closeCodeModal);
+        codeModal.addEventListener('click', (e) => {
+            if (e.target === codeModal) closeCodeModal();
+        });
+
+        navDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                scrollToStation(dot.dataset.step);
+            });
+        });
+
+        // Atualizar navegação com a rolagem
+        mainContainer.addEventListener('scroll', () => {
+            let minDistance = Infinity;
+            let currentStep = activeStep;
+            const containerCenter = mainContainer.getBoundingClientRect().left + mainContainer.offsetWidth / 2;
+
+            stations.forEach(station => {
+                const stationCenter = station.getBoundingClientRect().left + station.offsetWidth / 2;
+                const distance = Math.abs(containerCenter - stationCenter);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    currentStep = station.dataset.step;
+                }
+            });
+            if (currentStep !== activeStep) {
+                updateActiveNav(currentStep);
+            }
+        });
+
+        // --- ANIMAÇÕES E INICIALIZAÇÃO FINAL ---
+        
+        // Inicializar Tooltips
+        tippy('[data-tooltip]', {
+            content(reference) {
+                return reference.getAttribute('data-tooltip');
+            },
+            theme: 'custom',
+            animation: 'shift-away',
+        });
+
+        // Desenhar linhas de conexão e animar
+        const svgContainer = document.getElementById('connector-svg');
+        function drawLines() {
+            svgContainer.innerHTML = ''; // Limpar linhas existentes
+            const stationElements = Array.from(stations);
+            for (let i = 0; i < stationElements.length - 1; i++) {
+                const startEl = stationElements[i];
+                const endEl = stationElements[i + 1];
+
+                const startRect = startEl.getBoundingClientRect();
+                const endRect = endEl.getBoundingClientRect();
+                const containerRect = mainContainer.getBoundingClientRect();
+
+                const x1 = startRect.left - containerRect.left + startRect.width / 2 + mainContainer.scrollLeft;
+                const y1 = startRect.top - containerRect.top + startRect.height / 2;
+                const x2 = endRect.left - containerRect.left + endRect.width / 2 + mainContainer.scrollLeft;
+                const y2 = endRect.top - containerRect.top + endRect.height / 2;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                line.setAttribute('d', `M ${x1} ${y1} C ${x1 + 100} ${y1}, ${x2 - 100} ${y2}, ${x2} ${y2}`);
+                line.setAttribute('stroke', '#475569'); // slate-600
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('fill', 'none');
+                line.classList.add('connector-line');
+                svgContainer.appendChild(line);
+            }
+
+            // Animar com GSAP
+            gsap.to(".connector-line", {
+                strokeDashoffset: 0,
+                duration: 2,
+                ease: "power2.inOut",
+                stagger: 0.3
+            });
+        }
+        
+        // Chamar drawLines quando a janela for redimensionada
+        window.addEventListener('resize', drawLines);
+
+        // Inicialização
+        scrollToStation(1);
+        drawLines();
+    });
+    </script>
+</body>
+</html>
+
