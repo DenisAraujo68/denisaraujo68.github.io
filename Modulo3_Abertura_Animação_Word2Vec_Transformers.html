@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NLP Evolution: Word2Vec → Transformers</title>
+  <title>Evolução do PLN: Word2Vec → Transformers (Manual)</title>
   <style>
     :root{
       --bg:#0b1020;          /* deep night */
@@ -22,35 +22,20 @@
       background: radial-gradient(1200px 600px at 70% -10%, #1a2250 0%, #0b1020 50%, #070b18 100%);
       color:var(--ink);
     }
-    .frame{
-      display:grid; grid-template-rows:auto 1fr auto; min-height:100%; gap:16px; padding:24px; max-width:1100px; margin:0 auto;
-    }
+    .frame{ display:grid; grid-template-rows:auto 1fr auto; min-height:100%; gap:16px; padding:24px; max-width:1100px; margin:0 auto; }
     header{display:flex; align-items:center; gap:16px}
     .title{font-size:clamp(22px,2.4vw,28px); font-weight:800; letter-spacing:0.2px}
     .subtitle{color:var(--muted); font-size:14px}
 
-    .stage{
-      position:relative; background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border:1px solid rgba(255,255,255,0.08); border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.35) inset, 0 30px 80px rgba(10,20,40,0.35);
-      overflow:hidden;
-    }
-    .hud{
-      position:absolute; inset:0; pointer-events:none;
-    }
-    .caption{
-      padding:16px 18px; background:rgba(10,15,30,0.55); border-top:1px solid rgba(255,255,255,0.08);
-      border-bottom-left-radius:20px; border-bottom-right-radius:20px;
-    }
+    .stage{ position:relative; background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.08); border-radius:20px; box-shadow:0 10px 40px rgba(0,0,0,0.35) inset, 0 30px 80px rgba(10,20,40,0.35); overflow:hidden; }
+    .hud{ position:absolute; inset:0; pointer-events:none; }
+    .caption{ padding:16px 18px; background:rgba(10,15,30,0.55); border-top:1px solid rgba(255,255,255,0.08); border-bottom-left-radius:20px; border-bottom-right-radius:20px; }
     .caption h2{margin:0; font-size:18px}
     .caption p{margin:6px 0 0; color:var(--muted)}
 
     .controls{display:flex; justify-content:space-between; align-items:center; gap:10px}
     .btns{display:flex; gap:10px}
-    button{
-      appearance:none; border:none; background:var(--panel); color:var(--ink);
-      padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; border:1px solid rgba(255,255,255,0.08);
-      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
-    }
+    button{ appearance:none; border:none; background:var(--panel); color:var(--ink); padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; border:1px solid rgba(255,255,255,0.08); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; }
     button:hover{ transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.35); border-color:rgba(255,255,255,0.18)}
     button:active{ transform:translateY(0) scale(.98)}
     .chip{font-size:12px; padding:6px 8px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)}
@@ -68,7 +53,6 @@
     .dash{ stroke-dasharray:6 8; animation:dashmove 3.5s linear infinite }
     @keyframes dashmove{ to{ stroke-dashoffset:-1000 } }
 
-    /* Legend styles */
     .legend{ position:absolute; right:14px; top:14px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.08); padding:8px 10px; border-radius:12px; font-size:12px; color:var(--muted)}
     .legend b{ color:var(--ink) }
   </style>
@@ -80,34 +64,32 @@
         <path d="M12 2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 16.8 6.6 18.8l1-6.1L3.2 8.4l6.1-.9L12 2z" stroke="var(--accent)" stroke-width="1.2"/>
       </svg>
       <div>
-        <div class="title">NLP Evolution: Word2Vec → Transformers</div>
-        <div class="subtitle">A bite-size animation across five phases</div>
+        <div class="title">Evolução do PLN: Word2Vec → Transformers</div>
+        <div class="subtitle">Avanço manual entre as fases</div>
       </div>
     </header>
 
-    <div class="stage" id="stage" role="img" aria-label="Animated explanation of NLP evolution">
+    <div class="stage" id="stage" role="img" aria-label="Animação explicando a evolução do PLN">
       <svg id="viz" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" width="100%" height="100%"></svg>
       <div class="legend" id="legend"></div>
-      <div class="hud" aria-hidden="true">
-        <!-- corner glow -->
-      </div>
+      <div class="hud" aria-hidden="true"></div>
     </div>
 
     <div class="controls">
       <div class="btns">
-        <button id="prev">◀ Back</button>
-        <button id="next">Next ▶</button>
-        <button id="replay">↺ Replay</button>
+        <button id="prev">◀ Voltar</button>
+        <button id="next">Avançar ▶</button>
+        <button id="replay">↺ Reiniciar</button>
       </div>
       <div>
         <span class="chip" id="stepChip">1 / 5</span>
-        <span class="chip" id="statusChip">auto-play: on</span>
+        <button id="autoplayToggle" class="chip">Auto-play: On</button>
       </div>
     </div>
 
     <div class="caption" id="caption">
-      <h2>Phase 1 — Word2Vec (Word Vector Representation)</h2>
-      <p>Word2Vec maps words to vectors in a continuous space, preserving semantic relationships (e.g., "king" − "man" + "woman" ≈ "queen").</p>
+      <h2>Fase 1 — Word2Vec (Representação Vetorial)</h2>
+      <p>Word2Vec mapeia palavras para vetores em um espaço contínuo, preservando relações semânticas (ex.: "king" − "man" + "woman" ≈ "queen").</p>
     </div>
   </div>
 
@@ -118,13 +100,18 @@
   const stage = document.getElementById('stage');
   const legend = document.getElementById('legend');
   const stepChip = document.getElementById('stepChip');
-  const statusChip = document.getElementById('statusChip');
-  const BTN = {prev:document.getElementById('prev'), next:document.getElementById('next'), replay:document.getElementById('replay')};
+  const BTN = {
+    prev: document.getElementById('prev'),
+    next: document.getElementById('next'),
+    replay: document.getElementById('replay'),
+    autoplayToggle: document.getElementById('autoplayToggle')
+  };
 
   const W = 1200, H = 520;
   let step = 0; // 0..4
-  let timer = null; let autoplay = true;
-  const DURATION = 6400; // ms per phase
+  let timer = null;
+  let autoplay = true; // Autoplay starts on
+  const DURATION = 6400;
 
   function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
   function setCaption(title, text){
@@ -140,7 +127,6 @@
   function setLegend(html){ legend.innerHTML = html || ''; }
   function rand(min,max){ return Math.random()*(max-min)+min }
 
-  // Helpers to build SVG
   const NS = 'http://www.w3.org/2000/svg';
   function el(tag, attrs={}, children=[]) {
     const n = document.createElementNS(NS, tag);
@@ -152,12 +138,11 @@
     return el('text', Object.assign({x,y, 'font-size': opts.size||16, fill: opts.fill||'var(--ink)', 'font-weight': opts.bold?700:500, 'text-anchor': opts.anchor||'start', opacity: opts.opacity ?? 1}, opts.attrs||{}), [document.createTextNode(str)])
   }
 
-  // ===== PHASE 1: Word2Vec =====
+  // ===== FASE 1: Word2Vec =====
   function phase1(){
-    clearSVG(); setLegend('<b>Concepts:</b> word cloud → vector space | <b>Relation:</b> analogies');
+    clearSVG(); setLegend('<b>Conceitos:</b> nuvem de palavras → espaço vetorial | <b>Relação:</b> analogias');
     const g = el('g', {transform:'translate(0,0)'});
 
-    // word cloud
     const words = ['king','queen','man','woman','apple','orange','Paris','France','Rome','Italy','music','melody','dog','cat','happy','joy','car','vehicle'];
     const nodes = [];
     words.forEach((w,i)=>{
@@ -168,7 +153,6 @@
       g.appendChild(n); nodes.push({el:n, word:w});
     });
 
-    // axes for vector space
     const axes = el('g', {opacity:0});
     axes.appendChild(el('line', {x1:90,y1:H-80,x2:W-90,y2:H-80, stroke:'var(--muted)', 'stroke-width':1, class:'dash'}));
     axes.appendChild(el('line', {x1:120,y1:60,x2:120,y2:H-60, stroke:'var(--muted)', 'stroke-width':1, class:'dash'}));
@@ -178,10 +162,8 @@
 
     svg.appendChild(g);
 
-    // transition: cloud → vectors
     setTimeout(()=>{ axes.setAttribute('opacity',1); }, 600);
 
-    // deterministic pseudo-embeddings for layout (just for visuals)
     function embed(w){
       const map = {
         king:[0.82,0.75], queen:[0.86,0.78], man:[0.64,0.53], woman:[0.67,0.64],
@@ -201,7 +183,6 @@
       });
     }, 1200);
 
-    // show the famous analogy as arrows
     const analogy = el('g', {opacity:0});
     function pointOf(w){
       const [ex,ey] = embed(w);
@@ -221,45 +202,41 @@
     svg.appendChild(analogy);
     setTimeout(()=> analogy.setAttribute('opacity',1), 2200);
 
-    setCaption('Phase 1 — Word2Vec (Word Vector Representation)', 'Word2Vec maps words to vectors in a continuous space, preserving semantic relationships (e.g., "king" − "man" + "woman" ≈ "queen").');
+    setCaption('Fase 1 — Word2Vec (Representação Vetorial)', 'Word2Vec mapeia palavras para vetores em um espaço contínuo, preservando relações semânticas (ex.: "king" − "man" + "woman" ≈ "queen").');
   }
 
-  // ===== PHASE 2: seq2seq =====
+  // ===== FASE 2: seq2seq =====
   function phase2(){
-    clearSVG(); setLegend('<b>Concepts:</b> encoder → decoder | <b>Task:</b> translation');
+    clearSVG(); setLegend('<b>Conceitos:</b> codificador → decodificador | <b>Tarefa:</b> tradução');
     const g = el('g'); svg.appendChild(g);
 
     const input = 'the cat sits on the mat'.split(' ');
     const output = 'o gato senta no tapete'.split(' ');
 
-    // Draw encoder tokens
     const encY = 170, decY = 360;
-    const startX = 120, gap = 150;
+    const startX = 120;
     const encNodes = input.map((tok,i)=>{
-      const x = startX + i*gap*0.75;
+      const x = startX + i*150*0.75;
       const box = el('rect',{x:x-40,y:encY-24,width:80,height:40,rx:10,fill:'rgba(122,162,255,0.15)',stroke:'var(--accent)','stroke-width':1});
       const label = text(x, encY, tok,{anchor:'middle'});
       g.appendChild(box); g.appendChild(label);
       return {x,box,label};
     });
 
-    // Draw decoder tokens placeholders
     const decNodes = output.map((tok,i)=>{
-      const x = startX + i*gap*0.68;
+      const x = startX + i*150*0.68;
       const box = el('rect',{x:x-40,y:decY-24,width:80,height:40,rx:10,fill:'rgba(255,184,107,0.15)',stroke:'var(--accent2)','stroke-width':1, opacity:.65});
       const label = text(x, decY, '…',{anchor:'middle', opacity:.6});
       g.appendChild(box); g.appendChild(label);
       return {x,box,label,tok};
     });
 
-    // Encoder → context vector → Decoder
     const ctx = el('circle',{cx:W/2, cy:(encY+decY)/2, r:12, fill:'var(--pulse)', opacity:0});
     g.appendChild(ctx);
 
-    // Animate flows
     setTimeout(()=>{
       ctx.setAttribute('opacity',1);
-      encNodes.forEach((n,i)=>{
+      encNodes.forEach((n)=>{
         const path = el('path',{d:`M${n.x},${encY+20} C ${n.x},${encY+60} ${W/2},${encY+40} ${W/2},${(encY+decY)/2-14}`,
           stroke:'var(--accent)', 'stroke-width':1.6, fill:'none', class:'dash', opacity:.9});
         g.appendChild(path);
@@ -275,12 +252,12 @@
       });
     }, 1500);
 
-    setCaption('Phase 2 — seq2seq (Sequential Modeling)', 'seq2seq models handle input and output sequences of varying lengths, essential for tasks like machine translation.');
+    setCaption('Fase 2 — seq2seq (Modelagem Sequencial)', 'Modelos seq2seq lidam com sequências de entrada e saída de tamanhos diferentes, essenciais para tarefas como tradução automática.');
   }
 
-  // ===== PHASE 3: Attention =====
+  // ===== FASE 3: Atenção =====
   function phase3(){
-    clearSVG(); setLegend('<b>Concepts:</b> attention weights | <b>Visual:</b> heatmap highlights');
+    clearSVG(); setLegend('<b>Conceitos:</b> pesos de atenção | <b>Visual:</b> destaques tipo heatmap');
     const g = el('g'); svg.appendChild(g);
 
     const src = 'the cat sits on the mat'.split(' ');
@@ -288,11 +265,9 @@
 
     const left = 220, top = 110, cell = 34;
 
-    // labels
     src.forEach((t,i)=> g.appendChild(text(left - 10, top + i*cell + 18, t, {anchor:'end', size:14, fill:'var(--muted)'})));
     tgt.forEach((t,j)=> g.appendChild(text(left + j*cell + 16, top - 10, t, {anchor:'middle', size:14, fill:'var(--muted)'})));
 
-    // grid cells
     const cells=[];
     for(let i=0;i<src.length;i++){
       for(let j=0;j<tgt.length;j++){
@@ -302,12 +277,10 @@
       }
     }
 
-    // simulate sweeping attention diagonally and jumping to nouns
     let k=0; const seq=[ [1,1],[2,2],[2,3],[3,3],[4,4],[5,5] ];
     function highlight(i,j){
       cells.forEach(c=> c.r.setAttribute('fill','rgba(122,162,255,0.10)'));
       cells.filter(c=> c.i===i && c.j===j).forEach(c=> c.r.setAttribute('fill','rgba(94,230,169,0.65)'));
-      // soft neighborhood
       cells.filter(c=> Math.abs(c.i-i)+Math.abs(c.j-j)===1).forEach(c=> c.r.setAttribute('fill','rgba(139,213,255,0.45)'));
     }
     const walker = setInterval(()=>{
@@ -315,9 +288,8 @@
       if(k>seq.length*3) clearInterval(walker);
     }, 420);
 
-    // connection curves for a single decoding step
     const curves = el('g',{opacity:0});
-    [[1,1],[2,2],[2,3]].forEach(([i,j],idx)=>{
+    [[1,1],[2,2],[2,3]].forEach(([i,j])=>{
       const sx = left + j*cell + 12, sy = top - 22;
       const tx = left - 12, ty = top + i*cell + 16;
       const p = el('path',{d:`M${sx},${sy} C ${sx},${sy+60} ${tx},${ty-60} ${tx},${ty}`, stroke:'var(--good)', 'stroke-width':1.4, fill:'none', class:'dash', opacity:0.9});
@@ -326,15 +298,14 @@
     g.appendChild(curves);
     setTimeout(()=> curves.setAttribute('opacity',1), 900);
 
-    setCaption('Phase 3 — Attention (Focus and Context)', 'The attention mechanism allows the model to focus on specific parts of the input when producing the output, capturing the broader context more effectively.');
+    setCaption('Fase 3 — Atenção (Foco e Contexto)', 'A atenção permite ao modelo focar em partes específicas da entrada ao produzir a saída, capturando melhor o contexto.');
   }
 
-  // ===== PHASE 4: Transformers =====
+  // ===== FASE 4: Transformers =====
   function phase4(){
-    clearSVG(); setLegend('<b>Concepts:</b> multi-head attention + feed-forward | <b>Property:</b> parallelism');
+    clearSVG(); setLegend('<b>Conceitos:</b> atenção multi-cabeças + feed-forward | <b>Propriedade:</b> paralelismo');
     const g = el('g'); svg.appendChild(g);
 
-    // draw stacked transformer blocks
     const blocks = [];
     const bx = 200, by = 90, bw = 800, bh = 70, gap = 26;
     for(let i=0;i<4;i++){
@@ -344,19 +315,17 @@
       const mha = el('rect',{x:bx+18, y:y+12, width:bw-36, height:24, rx:10, fill:'rgba(122,162,255,0.18)', stroke:'var(--accent)'});
       const ffn = el('rect',{x:bx+18, y:y+bh-36, width:bw-36, height:24, rx:10, fill:'rgba(94,230,169,0.18)', stroke:'var(--good)'});
       group.appendChild(base); group.appendChild(mha); group.appendChild(ffn);
-      group.appendChild(text(bx+28, y+28, 'Multi-Head Attention', {size:14, fill:'var(--ink)'}));
+      group.appendChild(text(bx+28, y+28, 'Atenção Multi-cabeças', {size:14, fill:'var(--ink)'}));
       group.appendChild(text(bx+28, y+bh-20, 'Feed Forward', {size:14, fill:'var(--ink)'}));
       g.appendChild(group); blocks.push({group,mha,ffn});
     }
 
-    // parallel heads depiction
     const heads = el('g'); g.appendChild(heads);
     for(let h=0; h<8; h++){
       const cx = bx + 100 + h*85, cy = by + 12 + 12;
       const p = el('circle',{cx, cy, r:6, fill:'var(--accent)', opacity:.75}); heads.appendChild(p);
     }
 
-    // animate energy pulses through blocks
     const pulses = [];
     for(let i=0;i<12;i++){
       const px = bx + 40 + i*64; const c = el('circle',{cx:px, cy:by+bh/2, r:4, fill:'var(--pulse)', opacity:0});
@@ -372,7 +341,6 @@
       if(t++>28) clearInterval(run);
     }, 220);
 
-    // residual connections (skip)
     const res = el('g');
     for(let i=0;i<3;i++){
       const y1 = by + i*(bh+gap) + bh - 12;
@@ -382,25 +350,23 @@
     }
     g.appendChild(res);
 
-    setCaption('Phase 4 — Transformers (The Transformer Breakthrough)', 'Transformers combine attention layers and parallel processing, enabling more efficient and flexible learning, as seen in models like BERT and GPT.');
+    setCaption('Fase 4 — Transformers (O Salto)', 'Transformers combinam camadas de atenção e processamento paralelo, permitindo aprendizado mais eficiente e flexível, como nos modelos BERT e GPT.');
   }
 
-  // ===== PHASE 5: Connection & Impact =====
+  // ===== FASE 5: Conexão & Impacto =====
   function phase5(){
-    clearSVG(); setLegend('<b>Concepts:</b> components together | <b>Impact:</b> Large Language Models');
+    clearSVG(); setLegend('<b>Conceitos:</b> componentes integrados | <b>Impacto:</b> LLMs');
     const g = el('g'); svg.appendChild(g);
 
-    // central LLM node
     const center = {x: W/2, y: H/2};
     const core = el('circle',{cx:center.x, cy:center.y, r:56, fill:'rgba(122,162,255,0.15)', stroke:'var(--accent)', 'stroke-width':1.6, class:'glow'});
     const label = text(center.x, center.y+4, 'LLMs', {anchor:'middle', size:24, bold:true});
     g.appendChild(core); g.appendChild(label);
 
-    // satellite nodes
     const nodes = [
       {name:'Word2Vec', color:'var(--accent2)'},
       {name:'seq2seq', color:'var(--accent2)'},
-      {name:'Attention', color:'var(--good)'},
+      {name:'Atenção', color:'var(--good)'},
       {name:'Transformers', color:'var(--accent)'},
       {name:'BERT', color:'var(--accent)'},
       {name:'GPT', color:'var(--accent)'}
@@ -416,24 +382,23 @@
       g.insertBefore(link, c); sats.push({c,l,link});
     });
 
-    // pulses moving along links
     const dots=[]; sats.forEach((s,idx)=>{
       const d = el('circle',{r:5, fill:'var(--pulse)', opacity:0}); g.appendChild(d); dots.push({d, idx});
     });
     let tt=0; const loop = setInterval(()=>{
       sats.forEach((s, i)=>{
         const ang = (i / sats.length) * Math.PI * 2 - Math.PI/2;
-        const t = ( (tt + i*6) % 100 ) / 100; // 0..1
+        const t = ( (tt + i*6) % 100 ) / 100;
         const x = center.x + Math.cos(ang)*R*t; const y = center.y + Math.sin(ang)*R*t;
         const dot = dots[i].d; dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('opacity', 0.95);
       });
       if(tt++>220) clearInterval(loop);
     }, 60);
 
-    setCaption('Phase 5 — Connection and Impact', 'The transition from Word2Vec to Transformers represents a significant leap in how we understand and process natural language more accurately and efficiently. Today, these advances power large-scale NLP models (LLMs) like GPT.');
+    setCaption('Fase 5 — Conexão e Impacto', 'A transição de Word2Vec para Transformers representa um salto na forma de compreender e processar linguagem natural com mais precisão e eficiência. Hoje, esses avanços alimentam LLMs como o GPT.');
   }
 
-  // ===== controller =====
+  // ===== controlador =====
   const phases = [phase1, phase2, phase3, phase4, phase5];
 
   function go(i){
@@ -447,17 +412,40 @@
       requestAnimationFrame(()=> stage.classList.add('fade-enter-active'));
     }, 180);
     if (timer){ clearInterval(timer); timer=null; }
-    if (autoplay){ timer = setInterval(()=> go(step+1), DURATION); }
+    if (autoplay){
+      timer = setTimeout(() => go(step + 1), DURATION);
+    }
   }
 
-  BTN.next.onclick = ()=>{ autoplay=false; statusChip.textContent='auto-play: off'; go(step+1); };
-  BTN.prev.onclick = ()=>{ autoplay=false; statusChip.textContent='auto-play: off'; go(step-1); };
-  BTN.replay.onclick = ()=>{ autoplay=true; statusChip.textContent='auto-play: on'; go(0); };
+  function stopAutoplay() {
+    if (autoplay) {
+      autoplay = false;
+      if(timer) clearTimeout(timer);
+      timer = null;
+      BTN.autoplayToggle.textContent = 'Auto-play: Off';
+    }
+  }
 
-  // kick off
+  BTN.next.onclick = ()=>{ stopAutoplay(); go(step+1); };
+  BTN.prev.onclick = ()=>{ stopAutoplay(); go(step-1); };
+  BTN.replay.onclick = ()=>{ stopAutoplay(); go(0); };
+  BTN.autoplayToggle.onclick = () => {
+    autoplay = !autoplay;
+    BTN.autoplayToggle.textContent = `Auto-play: ${autoplay ? 'On' : 'Off'}`;
+    if (autoplay) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => go(step + 1), DURATION);
+    } else {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+  };
+
+  // inicia na Fase 1 com auto-play
   go(0);
 })();
 </script>
 </body>
 </html>
-
