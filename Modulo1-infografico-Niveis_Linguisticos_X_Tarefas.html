@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Níveis Linguísticos & Tarefas-chave em PLN</title>
+    <style>
+        /* --- RESET E ESTILOS GERAIS --- */
+        :root {
+            --color-bg: #f8f9fa;
+            --color-card-bg: #ffffff;
+            --color-text: #212529;
+            --color-border: #dee2e6;
+            --color-highlight: #007bff;
+            --color-highlight-bg: #e7f3ff;
+            --color-shadow: rgba(0, 0, 0, 0.05);
+            --border-radius: 8px;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- CABEÇALHO --- */
+        .infographic-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            max-width: 800px;
+        }
+
+        .infographic-header h1 {
+            font-size: 2rem;
+            color: #343a40;
+        }
+
+        .infographic-header p {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+
+        /* --- CONTAINER PRINCIPAL DO INFOGRÁFICO --- */
+        #infographic-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- ESTRUTURA DE GRADE (DESKTOP) --- */
+        .infographic-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            /* Linha 1: Título das Tarefas, Linha 2: Cards das Tarefas, Linha 3: Conteúdo Principal */
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+        }
+
+        .axis-label {
+            font-weight: 600;
+            color: #495057;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .levels-axis-label {
+            grid-column: 1 / 2;
+            /* Posicionado acima dos cards de nível */
+            grid-row: 2 / 3;
+            align-self: end;
+        }
+
+        .tasks-axis-label {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+        
+        .tasks-container-wrapper {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+        }
+
+        .levels-axis {
+            grid-column: 1 / 2;
+            grid-row: 3 / 4;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: space-around;
+        }
+
+        .tasks-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+        }
+
+        .connections-canvas {
+            grid-column: 2 / 3;
+            grid-row: 3 / 4;
+            position: relative;
+            min-height: 400px;
+        }
+        
+        #connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Permite clicar através do SVG */
+        }
+        
+        #connections-svg path {
+            fill: none;
+            stroke: var(--color-border);
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* --- CARDS INTERATIVOS --- */
+        .card {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px var(--color-shadow);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card:hover, .card:focus {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: var(--color-highlight);
+        }
+        
+        .card.highlighted {
+            border-color: var(--color-highlight);
+            background-color: var(--color-highlight-bg);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            color: #343a40;
+        }
+
+        .card .icon {
+            font-size: 1.8rem;
+        }
+
+        .task-card {
+            width: 150px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- TOOLTIPS --- */
+        .tooltip {
+            position: absolute;
+            background-color: #343a40;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            z-index: 100;
+            pointer-events: none;
+            max-width: 250px;
+        }
+
+        .card:hover .tooltip, .card:focus .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .level-card .tooltip {
+            top: 50%;
+            left: 105%;
+            transform: translateY(-50%);
+        }
+        
+        .task-card .tooltip {
+            bottom: 105%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- POP-OVER (MODAL) --- */
+        .popover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        
+        .popover-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popover-content {
+            background-color: var(--color-card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .popover-overlay.visible .popover-content {
+            transform: scale(1);
+        }
+
+        .popover-content h2 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            color: var(--color-highlight);
+        }
+        
+        .popover-content h3 {
+            margin-top: 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .popover-content p, .popover-content blockquote {
+            margin-top: 0.8rem;
+            line-height: 1.6;
+        }
+        
+        .popover-content .example-block {
+            background-color: var(--color-bg);
+            border-left: 4px solid var(--color-highlight);
+            padding: 1rem;
+            margin-top: 0.8rem;
+            border-radius: 4px;
+            font-family: "Courier New", Courier, monospace;
+        }
+        
+        .popover-content .pedagogical-note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--color-highlight-bg);
+            border-radius: var(--border-radius);
+            font-style: italic;
+        }
+
+        .popover-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        
+        /* TABLET */
+        @media (max-width: 1023px) {
+            .infographic-grid {
+                grid-template-columns: 150px 1fr;
+            }
+            .tasks-container-wrapper {
+                overflow-x: auto;
+                padding-bottom: 15px; /* Para sombra da barra de scroll não cortar */
+            }
+            .tasks-container {
+                justify-content: flex-start;
+                min-width: 700px; /* Força scroll */
+            }
+        }
+
+        /* MOBILE (MODO ACORDEÃO) */
+        @media (max-width: 767px) {
+            body {
+                padding: 1rem;
+            }
+            .infographic-grid {
+                display: none; /* Esconde a grade no mobile */
+            }
+            .accordion-container {
+                display: block;
+                width: 100%;
+            }
+            .accordion-item {
+                border: 1px solid var(--color-border);
+                border-radius: var(--border-radius);
+                margin-bottom: 1rem;
+                overflow: hidden;
+            }
+            .accordion-header {
+                display: flex;
+                align-items: center;
+                padding: 1rem;
+                cursor: pointer;
+                background-color: var(--color-card-bg);
+                width: 100%;
+                border: none;
+                text-align: left;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            .accordion-header:hover, .accordion-header:focus {
+                background-color: #f1f3f5;
+            }
+            .accordion-header .icon {
+                font-size: 1.5rem;
+                margin-right: 1rem;
+            }
+            .accordion-content {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease-out;
+                background-color: #f8f9fa;
+                padding: 0 1rem;
+            }
+            .accordion-content-inner {
+                 padding: 1rem 0;
+            }
+            .accordion-task-chip {
+                display: inline-block;
+                background-color: var(--color-highlight-bg);
+                color: var(--color-highlight);
+                border: 1px solid var(--color-highlight);
+                padding: 0.5rem 1rem;
+                border-radius: 20px;
+                margin: 0.25rem;
+                font-size: 0.9rem;
+                cursor: pointer;
+            }
+        }
+        
+        /* Esconde acordeão em telas maiores */
+        @media (min-width: 768px) {
+            .accordion-container {
+                display: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="infographic-header">
+        <h1>Níveis Linguísticos & Tarefas-chave em PLN</h1>
+        <p>Como cada nível da linguagem conecta-se a operações computacionais essenciais.</p>
+    </header>
+
+    <div id="infographic-container">
+        <!-- Grade para Desktop/Tablet -->
+        <div class="infographic-grid">
+            <div class="axis-label tasks-axis-label">Tarefas de PLN</div>
+            <div class="axis-label levels-axis-label">Níveis Linguísticos</div>
+
+            <div id="levels-container" class="levels-axis"></div>
+            <div id="tasks-container" class="tasks-container-wrapper">
+                <div class="tasks-container"></div>
+            </div>
+            <div class="connections-canvas">
+                <svg id="connections-svg"></svg>
+            </div>
+        </div>
+
+        <!-- Acordeão para Mobile -->
+        <div id="accordion-container" class="accordion-container"></div>
+    </div>
+
+    <!-- Pop-over (Modal) -->
+    <div id="popover" class="popover-overlay" role="dialog" aria-modal="true" aria-labelledby="popover-title">
+        <div class="popover-content">
+            <button class="popover-close" aria-label="Fechar">&times;</button>
+            <div id="popover-body"></div>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- 11) DADOS E ESTRUTURA INTERNA ---
+        const data = {
+            levels: [
+                { id: 'fonologia', name: 'Fonologia', icon: '🔊', def_short: 'Estudo dos sons e padrões sonoros da língua.', def_ext: 'A fonologia se concentra nos fonemas, as menores unidades de som que podem distinguir o significado, e como eles são organizados para formar a linguagem falada.', obs: 'Tarefas de fala (como reconhecimento e síntese de voz) operam neste nível, mas ficam fora do escopo deste infográfico do Módulo 1.' },
+                { id: 'morfologia', name: 'Morfologia', icon: '🧩', def_short: 'Estrutura interna das palavras (morfemas, afixos, flexões).', def_ext: 'A morfologia analisa como as palavras são formadas a partir de unidades menores de significado, chamadas morfemas. Isso inclui raízes, prefixos, sufixos e flexões (como plural e tempo verbal).' },
+                { id: 'sintaxe', name: 'Sintaxe', icon: '🌳', def_short: 'Estrutura das sentenças e relações entre palavras.', def_ext: 'A sintaxe governa como as palavras se combinam para formar frases, orações e sentenças gramaticalmente corretas. Ela define as relações estruturais, como sujeito, verbo e objeto.' },
+                { id: 'semantica', name: 'Semântica', icon: '💡', def_short: 'Significados de palavras e sentenças.', def_ext: 'A semântica lida com o significado literal de palavras, frases e sentenças, independentemente do contexto. Ela busca entender o que uma expressão linguística significa.' },
+                { id: 'pragmatica', name: 'Pragmática', icon: '💬', def_short: 'Uso da linguagem em contexto, intenção e efeito no interlocutor.', def_ext: 'A pragmática estuda como o contexto contribui para o significado. Ela considera a intenção do falante, a interpretação do ouvinte e as normas sociais que governam a comunicação.' }
+            ],
+            tasks: [
+                { id: 'tokenizacao', name: 'Tokenização', icon: '➡️', def_short: 'Segmentação do texto em unidades (tokens).', def_ext: 'É o processo fundamental de quebrar um fluxo de texto em palavras, frases, símbolos ou outras peças significativas chamadas tokens. Estes tokens servem como entrada para as tarefas subsequentes.', example: '“Eu amo PLN.” → “Eu” | “amo” | “PLN” | “.”', pedagogical_note: 'A morfologia informa onde quebrar as palavras e como tratar contrações ou hifens, sendo a base para uma segmentação correta.' },
+                { id: 'pos', name: 'Rotulagem POS', icon: '🏷️', def_short: 'Atribuição de classes gramaticais a cada token.', def_ext: 'A rotulagem de Part-of-Speech (POS) atribui a cada token uma etiqueta gramatical, como substantivo, verbo, adjetivo, etc. Isso ajuda a desambiguar palavras e a entender sua função na sentença.', example: '“Eu/PRON amo/VERB PLN/PROPN .”', pedagogical_note: 'A sintaxe, que define as regras de combinação de palavras, oferece a evidência primária para determinar a classe gramatical de um token em seu contexto.' },
+                { id: 'parsing', name: 'Parsing', icon: '🌿', def_short: 'Análise da estrutura sintática da sentença.', def_ext: 'O parsing (análise sintática) constrói uma representação da estrutura gramatical de uma sentença, geralmente na forma de uma árvore de dependência ou de constituintes. Ele revela as relações hierárquicas entre as palavras.', example: 'Na frase “O gato persegue o rato”, o parsing identifica “O gato” como sujeito, “persegue” como verbo principal e “o rato” como objeto direto.', pedagogical_note: 'Esta é uma tarefa puramente sintática, que mapeia explicitamente as relações gramaticais que a sintaxe descreve.' },
+                { id: 'ner', name: 'NER', icon: '👤', def_short: 'Detecção e rotulagem de entidades nomeadas.', def_ext: 'O Reconhecimento de Entidades Nomeadas (NER) localiza e classifica entidades em texto em categorias predefinidas, como nomes de pessoas, organizações, locais, datas, etc.', example: '“A sede da UNISINOS fica no Brasil.” → “UNISINOS” = ORGANIZAÇÃO; “Brasil” = LOCAL.', pedagogical_note: 'O significado (semântica) de uma palavra como “Google” (uma empresa) ou “Paris” (uma cidade) é a evidência central para classificá-la como uma entidade.' },
+                { id: 'sentimento', name: 'Análise de Sentimento', icon: '😊', def_short: 'Classificação de polaridade/opinião em texto.', def_ext: 'Também conhecida como mineração de opinião, esta tarefa identifica e extrai informações subjetivas do texto, classificando-o como positivo, negativo, neutro ou em escalas mais refinadas (ex: raiva, alegria).', example: '“Produto excelente, recomendo!” → sentimento “positivo”.', pedagogical_note: 'A análise de sentimento vai além do significado literal e interpreta a intenção e a opinião do autor, uma tarefa central da pragmática.' },
+                { id: 'qa', name: 'QA', icon: '❓', def_short: 'Responder perguntas a partir de um contexto textual.', def_ext: 'Sistemas de Pergunta e Resposta (QA) são projetados para encontrar e apresentar respostas precisas a perguntas humanas, com base em um corpo de conhecimento fornecido (um texto, um banco de dados, etc.).', example: 'Contexto: “A Torre Eiffel foi inaugurada em 1889.” Pergunta: “Quando a Torre Eiffel foi inaugurada?” → Resposta: “em 1889”.', pedagogical_note: 'Compreender a intenção da pergunta e localizar a informação relevante no contexto exige uma análise pragmática do que está sendo perguntado e como a resposta se encaixa nesse contexto.' }
+            ],
+            links: [
+                { level: 'morfologia', task: 'tokenizacao', type: 'principal' },
+                { level: 'sintaxe', task: 'pos', type: 'principal' },
+                { level: 'sintaxe', task: 'parsing', type: 'principal' },
+                { level: 'semantica', task: 'ner', type: 'principal' },
+                { level: 'pragmatica', task: 'sentimento', type: 'principal' },
+                { level: 'pragmatica', task: 'qa', type: 'principal' }
+            ]
+        };
+
+        // --- REFERÊNCIAS AOS ELEMENTOS DO DOM ---
+        const levelsContainer = document.querySelector('#levels-container');
+        const tasksContainer = document.querySelector('.tasks-container');
+        const svgCanvas = document.getElementById('connections-svg');
+        const popover = document.getElementById('popover');
+        const popoverBody = document.getElementById('popover-body');
+        const popoverClose = document.querySelector('.popover-close');
+        const accordionContainer = document.getElementById('accordion-container');
+
+
+        // --- FUNÇÕES DE GERAÇÃO DINÂMICA DO CONTEÚDO ---
+        
+        function createCard(item, type) {
+            const card = document.createElement('div');
+            card.className = `card ${type}-card`;
+            card.id = `${type}-${item.id}`;
+            card.dataset.id = item.id;
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            card.innerHTML = `
+                <div class="icon" aria-hidden="true">${item.icon}</div>
+                <h3>${item.name}</h3>
+                <div class="tooltip" role="tooltip">${item.def_short}</div>
+            `;
+            return card;
+        }
+
+        function populateGrid() {
+            data.levels.forEach(level => {
+                const card = createCard(level, 'level');
+                levelsContainer.appendChild(card);
+            });
+
+            data.tasks.forEach(task => {
+                const card = createCard(task, 'task');
+                tasksContainer.appendChild(card);
+            });
+        }
+        
+        function populateAccordion() {
+            data.levels.forEach(level => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+
+                const header = document.createElement('button');
+                header.className = 'accordion-header';
+                header.innerHTML = `<span class="icon">${level.icon}</span> ${level.name}`;
+                header.setAttribute('aria-expanded', 'false');
+
+                const content = document.createElement('div');
+                content.className = 'accordion-content';
+                const contentInner = document.createElement('div');
+                contentInner.className = 'accordion-content-inner';
+
+                const linkedTasks = data.links.filter(link => link.level === level.id).map(link => data.tasks.find(t => t.id === link.task));
+                
+                if (linkedTasks.length > 0) {
+                    linkedTasks.forEach(task => {
+                        const chip = document.createElement('div');
+                        chip.className = 'accordion-task-chip';
+                        chip.textContent = task.name;
+                        chip.dataset.id = task.id;
+                        chip.setAttribute('role', 'button');
+                        chip.setAttribute('tabindex', '0');
+                        contentInner.appendChild(chip);
+                    });
+                } else {
+                     contentInner.innerHTML = `<p><em>${level.obs || 'Nenhuma tarefa principal associada neste módulo.'}</em></p>`;
+                }
+                
+                content.appendChild(contentInner);
+                item.appendChild(header);
+                item.appendChild(content);
+                accordionContainer.appendChild(item);
+            });
+        }
+        
+        // Desenha as conexões após os elementos estarem no DOM e terem dimensões
+        function drawConnections() {
+             // Atraso para garantir que o layout foi renderizado
+            setTimeout(() => {
+                svgCanvas.innerHTML = ''; // Limpa conexões antigas
+                data.links.forEach(link => {
+                    const levelCard = document.getElementById(`level-${link.level}`);
+                    const taskCard = document.getElementById(`task-${link.task}`);
+
+                    if (!levelCard || !taskCard) return;
+
+                    const rectLevel = levelCard.getBoundingClientRect();
+                    const rectTask = taskCard.getBoundingClientRect();
+                    const svgRect = svgCanvas.getBoundingClientRect();
+
+                    const startX = 0; // Borda direita do card de nível (relativo ao canvas)
+                    const startY = rectLevel.top - svgRect.top + rectLevel.height / 2;
+
+                    const endX = rectTask.left - svgRect.left + rectTask.width / 2;
+                    // O ponto final Y é a borda inferior do card de tarefa, relativo ao topo do canvas
+                    const endY = rectTask.bottom - svgRect.top;
+
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    // Curva de Bézier cúbica para uma transição suave
+                    const d = `M ${startX},${startY} C ${startX + 80},${startY} ${endX},${startY} ${endX},${endY}`;
+                    path.setAttribute('d', d);
+                    path.id = `path-${link.level}-${link.task}`;
+                    svgCanvas.appendChild(path);
+                });
+            }, 100);
+        }
+
+        // --- FUNÇÕES DE INTERATIVIDADE ---
+
+        function clearHighlights() {
+            document.querySelectorAll('.card.highlighted').forEach(c => c.classList.remove('highlighted'));
+            document.querySelectorAll('#connections-svg path').forEach(p => {
+                p.style.stroke = '';
+                p.style.strokeWidth = '';
+            });
+        }
+
+        function highlightElements(element) {
+            clearHighlights();
+            const id = element.dataset.id;
+            const isLevel = element.classList.contains('level-card');
+            
+            element.classList.add('highlighted');
+            
+            data.links.forEach(link => {
+                const shouldHighlight = (isLevel && link.level === id) || (!isLevel && link.task === id);
+                if (shouldHighlight) {
+                    document.getElementById(`level-${link.level}`).classList.add('highlighted');
+                    document.getElementById(`task-${link.task}`).classList.add('highlighted');
+                    const path = document.getElementById(`path-${link.level}-${link.task}`);
+                    if (path) {
+                        path.style.stroke = 'var(--color-highlight)';
+                        path.style.strokeWidth = '4px';
+                    }
+                }
+            });
+        }
+        
+        function showPopover(item) {
+            const isTask = 'pedagogical_note' in item;
+            let contentHTML = `
+                <h2 id="popover-title">${item.icon} ${item.name}</h2>
+                <p>${item.def_ext}</p>
+            `;
+            
+            if (isTask) {
+                contentHTML += `
+                    <h3>Exemplo Mínimo</h3>
+                    <div class="example-block">${item.example}</div>
+                    <div class="pedagogical-note">
+                        <strong>Nota Pedagógica:</strong> ${item.pedagogical_note}
+                    </div>
+                `;
+            } else if (item.obs) {
+                 contentHTML += `
+                    <div class="pedagogical-note">
+                        <strong>Observação:</strong> ${item.obs}
+                    </div>
+                `;
+            }
+            
+            popoverBody.innerHTML = contentHTML;
+            popover.classList.add('visible');
+            document.body.style.overflow = 'hidden'; // Bloqueia scroll do fundo
+        }
+        
+        function hidePopover() {
+            popover.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+        
+        // --- EVENT LISTENERS ---
+        
+        // Desktop/Tablet
+        const grid = document.querySelector('.infographic-grid');
+        if (grid) {
+            grid.addEventListener('mouseover', (e) => {
+                const card = e.target.closest('.card');
+                if (card) highlightElements(card);
+            });
+            
+            grid.addEventListener('focusin', (e) => {
+                 const card = e.target.closest('.card');
+                if (card) highlightElements(card);
+            });
+
+            grid.addEventListener('mouseout', clearHighlights);
+            grid.addEventListener('focusout', clearHighlights);
+            
+            grid.addEventListener('click', (e) => {
+                const card = e.target.closest('.card');
+                if (card) {
+                    const id = card.dataset.id;
+                    const type = card.classList.contains('level-card') ? 'levels' : 'tasks';
+                    const itemData = data[type].find(item => item.id === id);
+                    showPopover(itemData);
+                }
+            });
+            
+            grid.addEventListener('keydown', (e) => {
+                const card = e.target.closest('.card');
+                if (card && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    card.click();
+                }
+            });
+        }
+        
+        // Mobile
+        accordionContainer.addEventListener('click', e => {
+            const header = e.target.closest('.accordion-header');
+            if (header) {
+                const content = header.nextElementSibling;
+                const isExpanded = header.getAttribute('aria-expanded') === 'true';
+                
+                // Fecha todos os outros
+                accordionContainer.querySelectorAll('.accordion-header').forEach(h => {
+                    h.setAttribute('aria-expanded', 'false');
+                    h.nextElementSibling.style.maxHeight = null;
+                });
+                
+                if (!isExpanded) {
+                    header.setAttribute('aria-expanded', 'true');
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            }
+            
+            const chip = e.target.closest('.accordion-task-chip');
+            if(chip) {
+                const itemData = data.tasks.find(item => item.id === chip.dataset.id);
+                showPopover(itemData);
+            }
+        });
+         accordionContainer.addEventListener('keydown', (e) => {
+            const chip = e.target.closest('.accordion-task-chip');
+            if (chip && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                chip.click();
+            }
+        });
+
+
+        // Geral (Popover)
+        popoverClose.addEventListener('click', hidePopover);
+        popover.addEventListener('click', (e) => {
+            if (e.target === popover) hidePopover(); // Fecha ao clicar no overlay
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && popover.classList.contains('visible')) {
+                hidePopover();
+            }
+        });
+
+        // --- INICIALIZAÇÃO ---
+        populateGrid();
+        populateAccordion();
+        drawConnections();
+        window.addEventListener('resize', drawConnections); // Redesenha ao redimensionar
+    });
+    </script>
+</body>
+</html>
+
